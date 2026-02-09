@@ -20,7 +20,8 @@ Blockchain_Ledger_P2P/
 │   ├── CryptoUtils .cc/.h      # Helper functions for OpenSSL (SHA256, Keys)
 │   │
 │   └── Makefile                # Build file
-└── simulation_logs.log         # Sample output
+├── simulation_logs.log         # Sample output
+└── blockchain_assignment_1.pdf # Actual assignment given by Instructor
 
 ```
 
