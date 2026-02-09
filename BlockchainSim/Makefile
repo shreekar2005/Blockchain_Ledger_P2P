@@ -31,7 +31,7 @@ PROJECTRELATIVE_PATH =
 O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
-OBJS = $O/Node.o $O/Blockchain_m.o
+OBJS = $O/BlockchainLedger.o $O/CryptoUtils.o $O/Node.o $O/Blockchain_m.o
 
 # Message files
 MSGFILES = \

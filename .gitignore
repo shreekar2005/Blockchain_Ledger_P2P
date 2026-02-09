@@ -42,6 +42,7 @@
 
 
 # this project specific
-results
-out
-BlockchainSim
+BlockchainSim/results
+BlockchainSim/out
+BlockchainSim/BlockchainSim
+BlockchainSim/BlockchainSim_dbg
