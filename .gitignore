@@ -46,3 +46,5 @@ BlockchainSim/results
 BlockchainSim/out
 BlockchainSim/BlockchainSim
 BlockchainSim/BlockchainSim_dbg
+BlockchainSim/Blockchain_m.h
+BlockchainSim/Blockchain_m.cc
