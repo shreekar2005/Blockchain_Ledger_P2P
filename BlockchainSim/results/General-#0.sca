@@ -1,0 +1,205 @@
+version 3
+run General-0-20260209-19:33:17-25461
+attr configname General
+attr datetime 20260209-19:33:17
+attr datetimef 20260209-193317
+attr experiment General
+attr inifile omnetpp.ini
+attr iterationvars ""
+attr iterationvarsd ""
+attr iterationvarsf ""
+attr measurement ""
+attr network SupplyChainNetwork
+attr processid 25461
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+config network SupplyChainNetwork
+config sim-time-limit 1000s
+config *.node[*].hashPower 20.0
+config *.seed[*].startUpTime 0s
+config *.peer[0..2].startUpTime 0s
+config *.peer[3].startUpTime 20s
+config *.peer[4].startUpTime 0s
+config *.peer[4].shutdownTime 50s
+
+par SupplyChainNetwork.peer[0].port$o[0].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.peer[0].port$o[0].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.peer[0].port$o[0].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.seed[0].port$o[0].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.seed[0].port$o[0].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.seed[0].port$o[0].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.peer[1].port$o[0].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.peer[1].port$o[0].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.peer[1].port$o[0].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.seed[0].port$o[1].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.seed[0].port$o[1].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.seed[0].port$o[1].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.peer[2].port$o[0].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.peer[2].port$o[0].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.peer[2].port$o[0].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.seed[1].port$o[0].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.seed[1].port$o[0].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.seed[1].port$o[0].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.peer[3].port$o[0].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.peer[3].port$o[0].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.peer[3].port$o[0].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.seed[1].port$o[1].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.seed[1].port$o[1].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.seed[1].port$o[1].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.peer[4].port$o[0].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.peer[4].port$o[0].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.peer[4].port$o[0].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.seed[0].port$o[2].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.seed[0].port$o[2].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.seed[0].port$o[2].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.peer[0].port$o[1].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.peer[0].port$o[1].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.peer[0].port$o[1].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.peer[1].port$o[1].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.peer[1].port$o[1].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.peer[1].port$o[1].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.peer[1].port$o[2].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.peer[1].port$o[2].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.peer[1].port$o[2].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.peer[2].port$o[1].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.peer[2].port$o[1].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.peer[2].port$o[1].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.peer[2].port$o[2].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.peer[2].port$o[2].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.peer[2].port$o[2].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.peer[3].port$o[1].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.peer[3].port$o[1].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.peer[3].port$o[1].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.peer[3].port$o[2].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.peer[3].port$o[2].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.peer[3].port$o[2].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.peer[4].port$o[1].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.peer[4].port$o[1].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.peer[4].port$o[1].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.peer[4].port$o[2].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.peer[4].port$o[2].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.peer[4].port$o[2].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.peer[0].port$o[2].channel typename "\"SupplyChainNetwork.Cable\""
+par SupplyChainNetwork.peer[0].port$o[2].channel disabled false
+attr mutable ""
+par SupplyChainNetwork.peer[0].port$o[2].channel delay 0.1s
+attr mutable ""
+attr unit s
+par SupplyChainNetwork.seed[0] typename "\"Node\""
+par SupplyChainNetwork.seed[0] isSeed true
+par SupplyChainNetwork.seed[0] hashPower 10
+par SupplyChainNetwork.seed[0] myIp "\"192.168.0.x\""
+par SupplyChainNetwork.seed[0] startUpTime 0s
+attr unit s
+par SupplyChainNetwork.seed[0] shutdownTime -1s
+attr unit s
+par SupplyChainNetwork.seed[1] typename "\"Node\""
+par SupplyChainNetwork.seed[1] isSeed true
+par SupplyChainNetwork.seed[1] hashPower 10
+par SupplyChainNetwork.seed[1] myIp "\"192.168.0.x\""
+par SupplyChainNetwork.seed[1] startUpTime 0s
+attr unit s
+par SupplyChainNetwork.seed[1] shutdownTime -1s
+attr unit s
+par SupplyChainNetwork.peer[0] typename "\"Node\""
+par SupplyChainNetwork.peer[0] isSeed false
+par SupplyChainNetwork.peer[0] hashPower 10
+par SupplyChainNetwork.peer[0] myIp "\"192.168.0.x\""
+par SupplyChainNetwork.peer[0] startUpTime 0s
+attr unit s
+par SupplyChainNetwork.peer[0] shutdownTime -1s
+attr unit s
+par SupplyChainNetwork.peer[1] typename "\"Node\""
+par SupplyChainNetwork.peer[1] isSeed false
+par SupplyChainNetwork.peer[1] hashPower 10
+par SupplyChainNetwork.peer[1] myIp "\"192.168.0.x\""
+par SupplyChainNetwork.peer[1] startUpTime 0s
+attr unit s
+par SupplyChainNetwork.peer[1] shutdownTime -1s
+attr unit s
+par SupplyChainNetwork.peer[2] typename "\"Node\""
+par SupplyChainNetwork.peer[2] isSeed false
+par SupplyChainNetwork.peer[2] hashPower 10
+par SupplyChainNetwork.peer[2] myIp "\"192.168.0.x\""
+par SupplyChainNetwork.peer[2] startUpTime 0s
+attr unit s
+par SupplyChainNetwork.peer[2] shutdownTime -1s
+attr unit s
+par SupplyChainNetwork.peer[3] typename "\"Node\""
+par SupplyChainNetwork.peer[3] isSeed false
+par SupplyChainNetwork.peer[3] hashPower 10
+par SupplyChainNetwork.peer[3] myIp "\"192.168.0.x\""
+par SupplyChainNetwork.peer[3] startUpTime 20s
+attr unit s
+par SupplyChainNetwork.peer[3] shutdownTime -1s
+attr unit s
+par SupplyChainNetwork.peer[4] typename "\"Node\""
+par SupplyChainNetwork.peer[4] isSeed false
+par SupplyChainNetwork.peer[4] hashPower 10
+par SupplyChainNetwork.peer[4] myIp "\"192.168.0.x\""
+par SupplyChainNetwork.peer[4] startUpTime 0s
+attr unit s
+par SupplyChainNetwork.peer[4] shutdownTime 50s
+attr unit s
+par SupplyChainNetwork typename "\"SupplyChainNetwork\""
+
