@@ -60,23 +60,21 @@ sudo apt-get install libssl-dev
 ### 2. Build Steps
 
 1. Open OMNeT++ IDE and import the folder `Blockchain_Ledger_P2P`.
-2. Right-click `BlockchainSim` -> **Properties** -> **OMNeT++** -> **Makemake**.
-3. Select the folder, go to **Options** -> **Link**.
-4. In "More options to link...", make sure to add:
-```text
--lssl -lcrypto
+2. Click on `BlockchainSim` in Project Explorer view
+3. Click on **Project** in top bar -> **Properties** -> **OMNeT++** -> **Makemake**.
+4. Select the folder, go to **Options** -> **Link**.
+5. In "Additional libraries to link with: (-l option)", make sure to add:
+    1. ssl
+    2. crypto
 
-```
 
-
-5. Apply and Close.
-6. Right-click Project -> **Clean**, then **Build Project**.
+6. Click OK, Click Apply and Close.
+7. Right-click `BlockchainSim` in Project Explorer view -> **Clean**, then **Build Project**.
 
 ### 3. Running the Simulation
 
 1. Open `omnetpp.ini`.
 2. Click the Green **Run** button.
-3. Select the `General` config.
 
 ## Simulation Scenarios
 
@@ -87,6 +85,18 @@ In `omnetpp.ini`, We have configured specific events to test the dynamic behavio
 * **T=40s (Attack):** **Peer 2** tries to do a **Double Spend Attack**. The network rejects this invalid block.
 * **T=50s (Node Death):** **Peer 4** crashes (simulated failure).
 * **T=89s:** Neighbors detect Peer 4 is dead (after 39s timeout) and broadcast a report.
+
+## Simulation Logs (`simulation_logs.log`)
+
+The `simulation_logs.log` file contains the complete execution trace of the network scenario described above. Key events you can find in the logs include:
+
+* **Node Lifecycle:** Entries showing `SEED ... ONLINE` and `PEER ... ONLINE` confirm the dynamic arrival of nodes (e.g., Peer 3 joining at T=20s).
+* **Mining & Consensus:** Frequent `MINED BLOCK` entries show successful Proof-of-Work, followed by `Received longer chain... Switching...` messages as nodes synchronize.
+* **Merkle Roots:** Every mined block logs its cryptographic root (e.g., `Root: 2795c735`), verifying Task 2.
+* **Double Spend Attack:** At T=40s, you will see `!!! ATTACK: Initiating Double Spending...` followed immediately by neighbors rejecting the block with a `SECURITY ALERT`.
+* **Fault Detection:** Around T=89s, the logs show `Received Dead Node Report`, confirming the network successfully detected the crash of Peer 4.
+
+---
 
 ## Group Members
 
