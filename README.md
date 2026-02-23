@@ -10,7 +10,10 @@ We have split the code into different modules to make it clean and easy to under
 
 ```bash
 Blockchain_Ledger_P2P/
-├── BlockchainSim/
+├── Analytical/
+│   └── task7_analysis.py       # Python script for Stochastic Analysis of Mining (Task 7)
+│
+├── Simulation/                 # Main OMNeT++ workspace
 │   ├── Blockchain.ned          # Defines the network (Seeds and Peers)
 │   ├── Blockchain.msg          # Defines message types (Block, Transaction, Gossip)
 │   ├── omnetpp.ini             # Configuration file (Timers, Scenarios)
@@ -20,8 +23,11 @@ Blockchain_Ledger_P2P/
 │   ├── CryptoUtils .cc/.h      # Helper functions for OpenSSL (SHA256, Keys)
 │   │
 │   └── Makefile                # Build file
-├── simulation_logs.log         # Sample output
-└── blockchain_assignment_1.pdf # Actual assignment given by Instructor
+│
+├── blockchain_assignment_1.pdf # Actual assignment given by Instructor
+├── LICENSE                     # Project License
+├── README.md                   # This documentation file
+└── simulation_logs.log         # Complete execution trace output
 
 ```
 
@@ -30,53 +36,61 @@ Blockchain_Ledger_P2P/
 As per the assignment requirements, the simulation covers:
 
 1. **P2P Network:**
+
 * There are **Seed Nodes** (Servers) and **Peer Nodes** (Miners).
 * Peers connect to Seeds to register and then connect to each other.
 
-
 2. **Blockchain Logic:**
+
 * **Mining:** Nodes use an exponential timer to simulate Proof-of-Work. The difficulty depends on hash power.
 * **Consensus:** Nodes follow the **Longest Chain Rule**. If a longer chain is received, they switch to it.
 * **Merkle Tree:** Every block calculates a Merkle Root for its transactions (Task 2).
 
-
 3. **Security & Liveness:**
-* **Double Spending:** We implemented a local ledger that remembers spent assets. If a node tries to spend the same asset twice, the block is rejected (Task 3).
+
+* **Double Spending:** We implemented a local UTXO ledger that tracks unspent assets. If a node tries to spend the same asset twice, the block is rejected (Task 3).
 * **Gossip Protocol:** Messages are flooded to neighbors. Loops are prevented using a unique ID check.
 * **Dead Node Detection:** Nodes send a "Ping" every 13s. If a neighbor is silent for 39s, it is reported as **DEAD**.
 
+4. **Analytical Modeling (Task 7):**
 
+* Included a Python script (`task7_analysis.py`) that models the exponential random variables to plot the waiting time () distribution and the relationship between  and Hash Power.
 
 ## How to Compile and Run
 
 ### 1. Prerequisites
 
-1. You need **OMNeT++** installed
+1. You need **OMNeT++** installed.
+2. You need **OpenSSL** installed:
 
-2. You need **OpenSSL** installed
 ```bash
 sudo apt-get install libssl-dev
 ```
 
-### 2. Build Steps
+3. You need **Python 3** and **Matplotlib** (only for Task 7 graphs):
 
-1. Open OMNeT++ IDE and import the folder `Blockchain_Ledger_P2P`.
-2. Click on `BlockchainSim` in Project Explorer view
+```bash
+sudo apt-get install python3-matplotlib python3-numpy
+```
+
+### 2. Build Steps (OMNeT++ IDE)
+
+1. Open OMNeT++ IDE and import the `Simulation` folder.
+2. Click on `Simulation` in the Project Explorer view.
 3. Click on **Project** in top bar -> **Properties** -> **OMNeT++** -> **Makemake**.
 4. Select the folder, go to **Options** -> **Link**.
 5. In "Additional libraries to link with: (-l option)", make sure to add:
-    1. ssl
-    2. crypto
+1. ssl
+2. crypto
 
 
 6. Click OK, Click Apply and Close.
-7. Right-click `BlockchainSim` in Project Explorer view -> **Clean**, then **Build Project**.
+7. Right-click the project in Project Explorer view -> **Clean**, then **Build Project**.
 
 ### 3. Running the Simulation
 
-1. Open `omnetpp.ini`.
+1. Open `omnetpp.ini` inside the `Simulation` folder.
 2. Click the Green **Run** button.
-
 
 ## Automatic File Generation & Command Line Workflow (Whoever is reading this can skip this section)
 
@@ -89,18 +103,22 @@ When you build the project, OMNeT++ automatically generates several critical fil
 
 Because the `Makefile` is generated, you are not tied to the OMNeT++ IDE. You can edit the source code in **VS Code**, Atom, or Sublime Text, and manage the build process entirely from the terminal:
 
-1. **Build:** Run `make` to compile the project and generate the executable.
-2. **Clean:** Run `make clean` to remove build artifacts and temporary files.
-3. **Run:** After a successful build, execute the simulation directly from the terminal:
+1. **Navigate to Simulation directory:** 
 ```bash
-./out/gcc-release/BlockchainSim
+cd Simulation
 ```
-*(Note: The path might vary slightly depending on your build configuration, e.g., `gcc-debug`)*
+2. **Build:** Run `make` to compile the project and generate the executable.
+3. **Clean:** Run `make clean` to remove build artifacts and temporary files.
+4. **Run:** After a successful build, execute the simulation directly from the terminal:
+```bash
+./BlockchainSim
+```
 
+*(Note: You can also run the release build via `./out/gcc-release/BlockchainSim` depending on your active configuration).*
 
 ## Simulation Scenarios
 
-In `omnetpp.ini`, We have configured specific events to test the dynamic behavior:
+In `omnetpp.ini`, we have configured specific events to test the dynamic behavior:
 
 * **T=0s:** Network starts. Seeds and Peers 0, 1, 2, 4 are online.
 * **T=20s (Node Arrival):** **Peer 3** wakes up and joins the network late. It starts syncing.
@@ -110,19 +128,19 @@ In `omnetpp.ini`, We have configured specific events to test the dynamic behavio
 
 ## Simulation Logs (`simulation_logs.log`)
 
-The `simulation_logs.log` file contains the complete execution trace of the network scenario described above. Key events you can find in the logs include:
+The `simulation_logs.log` file in the root directory contains the complete execution trace of the network scenario described above. Key events you can find in the logs include:
 
 * **Node Lifecycle:** Entries showing `SEED ... ONLINE` and `PEER ... ONLINE` confirm the dynamic arrival of nodes (e.g., Peer 3 joining at T=20s).
 * **Mining & Consensus:** Frequent `MINED BLOCK` entries show successful Proof-of-Work, followed by `Received longer chain... Switching...` messages as nodes synchronize.
 * **Merkle Roots:** Every mined block logs its cryptographic root (e.g., `Root: 2795c735`), verifying Task 2.
-* **Double Spend Attack:** At T=40s, you will see `!!! ATTACK: Initiating Double Spending...` followed immediately by neighbors rejecting the block with a `SECURITY ALERT`.
-* **Fault Detection:** Around T=89s, the logs show `Received Dead Node Report`, confirming the network successfully detected the crash of Peer 4.
+* **Double Spend Attack:** At T=40s, you will see `!!! INITIATING DOUBLE SPEND ATTACK !!!` followed immediately by neighbors rejecting the block with a `SECURITY ALERT`.
+* **Fault Detection:** Around T=89s, the logs show `WARNING: Neighbor on gate X is DEAD!`, confirming the network successfully detected the crash of Peer 4.
 
 ---
 
 ## Group Members
 
-* (B23CS1069) <b23cs1069@iitj.ac.in> Shreekar
-* (B23CS1101) <B23CS1101@iitj.ac.in> Tavishi Srivastava
-* (B23CS1076) <b23cs1076@iitj.ac.in> Vadlamudi Jyothsna
-* (B23CS1031) <b23cs1031@iitj.ac.in> Kurra Hema
+* (B23CS1069) [b23cs1069@iitj.ac.in](mailto:b23cs1069@iitj.ac.in) Shreekar
+* (B23CS1101) [B23CS1101@iitj.ac.in](mailto:B23CS1101@iitj.ac.in) Tavishi Srivastava
+* (B23CS1076) [b23cs1076@iitj.ac.in](mailto:b23cs1076@iitj.ac.in) Vadlamudi Jyothsna
+* (B23CS1031) [b23cs1031@iitj.ac.in](mailto:b23cs1031@iitj.ac.in) Kurra Hema

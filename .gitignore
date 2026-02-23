@@ -42,9 +42,9 @@
 
 
 # this project specific
-BlockchainSim/results
-BlockchainSim/out
-BlockchainSim/BlockchainSim
-BlockchainSim/BlockchainSim_dbg
-BlockchainSim/Blockchain_m.h
-BlockchainSim/Blockchain_m.cc
+Simulation/results
+Simulation/out
+Simulation/BlockchainSim
+Simulation/BlockchainSim_dbg
+Simulation/Blockchain_m.h
+Simulation/Blockchain_m.cc
