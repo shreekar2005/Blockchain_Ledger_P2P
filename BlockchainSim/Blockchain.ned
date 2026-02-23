@@ -27,16 +27,11 @@ network SupplyChainNetwork
     submodules:
         seed[2]: Node {
             isSeed = true;
-            // NEW: 'm' means matrix layout. 
-            // places seed[0] at (300,300) and seed[1] at (500,300).
-            // they will sit perfectly in the center of the screen.
             @display("i=device/server;is=n");
         }
         peer[5]: Node {
             isSeed = false;
-            // NEW: 'ring' layout!
-            // arranges all 5 peers in a perfect circle centered at (400,300) 
-            // with a radius of 220 pixels.
+            // arranges all 5 peers in a perfect circle centered at (400,300) with a radius of 220 pixels.
             @display("i=device/pc;p=100,100,ring,320,320");
         }
     connections allowunconnected:
