@@ -1,4 +1,5 @@
 // Blockchain.msg
+
 message TransactionMsg {
     string sender;
     string receiver;
@@ -21,8 +22,7 @@ message BlockMsg {
 }
 
 message GossipMsg {
-    // Types: 1=NewBlock, 2=NewTx, 3=Liveness, 4=DeadNodeReport
-    int type; 
+    int type; // 1=NewBlock, 2=NewTx, 3=Liveness, 4=DeadNodeReport
     string originatorIp;
     int msgId;
     string payload; 

@@ -1,10 +1,11 @@
+// Node.cc
+
 #include "Node.h"
 
 Define_Module(Node);
 
 void Node::initialize()
 {
-    // 1. Config
     isSeed = par("isSeed");
     hashPower = par("hashPower");
     myIp = par("myIp").stdstringValue() + "_" + std::to_string(getIndex());
@@ -15,28 +16,23 @@ void Node::initialize()
     gossipCounter = 0;
     meanBlockTime = 2.0;
 
-    // 2. Setup Modules
     keyPair = CryptoUtils::generateKey();
-    ledger.createGenesis(); // Initialize Ledger
+    ledger.createGenesis();
 
-    // 3. Timers
     miningTimer = new cMessage("MiningTimer");
     livenessTimer = new cMessage("LivenessTimer");
     startUpTimer = new cMessage("StartUp");
     shutdownTimer = new cMessage("Shutdown");
     doubleSpendTimer = new cMessage("DoubleSpendAttack");
 
-    // 4. Schedule Lifecycle
     scheduleAt(startUpTime, startUpTimer);
     if (shutdownTime >= 0) scheduleAt(shutdownTime, shutdownTimer);
     
-    // Schedule Attack for Node 2 at 40s
     if (!isSeed && getIndex() == 2) scheduleAt(40.0, doubleSpendTimer);
 }
 
 void Node::handleMessage(cMessage *msg)
 {
-    // --- LIFECYCLE ---
     if (msg == startUpTimer) {
         isOnline = true;
         EV << (isSeed ? "SEED" : "PEER") << " " << myIp << " ONLINE." << endl;
@@ -57,12 +53,9 @@ void Node::handleMessage(cMessage *msg)
 
     if (!isOnline) { if (!msg->isSelfMessage()) delete msg; return; }
 
-    // --- MINING ---
     if (msg == miningTimer) {
-        // Delegate logic to Ledger Module
         LocalBlock b = ledger.createCandidateBlock(getIndex(), myIp);
         
-        // Convert to Message
         BlockMsg *bMsg = new BlockMsg("BlockData");
         bMsg->setIndex(b.index);
         bMsg->setCurrentHash(b.hash.c_str());
@@ -73,39 +66,32 @@ void Node::handleMessage(cMessage *msg)
              bMsg->setTransactions(k, b.transactions[k].c_str());
         }
 
-        // Add to own ledger first
         ledger.validateAndAddBlock(bMsg); 
         
         EV << "MINED BLOCK " << b.index << " | Root: " << b.merkleRoot.substr(0,8) << endl;
-        broadcast(bMsg->dup()); // Broadcast copy
-        delete bMsg; // Delete original
+        broadcast(bMsg->dup());
+        delete bMsg;
         
         startMining();
     }
-    // --- LIVENESS ---
     else if (msg == livenessTimer) {
         checkLiveness();
         scheduleAt(simTime() + 13.0, livenessTimer);
     }
-    // --- NETWORK ---
     else {
         int gateIndex = msg->getArrivalGate()->getIndex();
         lastHeardFrom[gateIndex] = simTime();
 
         BlockMsg *bMsg = dynamic_cast<BlockMsg*>(msg);
         if (bMsg) {
-            // Delegate Validation to Ledger Module
             int result = ledger.validateAndAddBlock(bMsg);
-            
             if (result == 1) {
-                // Accepted & Longer -> Switch & Broadcast
                 EV << "Received longer chain (Block " << bMsg->getIndex() << "). Switching..." << endl;
                 if (miningTimer->isScheduled()) cancelEvent(miningTimer);
                 startMining();
                 broadcast(bMsg->dup(), true, gateIndex);
             }
             else if (result == -1) {
-                // Double Spend Detected
                 EV << "SECURITY ALERT: Double Spending in Block " << bMsg->getIndex() << "!" << endl;
             }
         }
@@ -119,12 +105,13 @@ void Node::handleMessage(cMessage *msg)
 
 void Node::performDoubleSpendAttack() {
     EV << "!!! INITIATING DOUBLE SPEND ATTACK !!!" << endl;
-    // Maliciously craft a block with an old asset
     BlockMsg *maliciousMsg = new BlockMsg("FakeBlock");
-    maliciousMsg->setIndex(ledger.getHeight()); // Try to extend current
+    maliciousMsg->setIndex(ledger.getHeight());
     maliciousMsg->setCurrentHash("FAKE_HASH");
-    maliciousMsg->setTransactionsArraySize(1);
-    maliciousMsg->setTransactions(0, "Oil_0_0"); // Assume Genesis asset "Oil_0_0" is already spent
+    maliciousMsg->setTransactionsArraySize(2);
+
+    maliciousMsg->setTransactions(0, "SPEND:Genesis_Asset");
+    maliciousMsg->setTransactions(1, "CREATE:Hacker_Asset");
     
     broadcast(maliciousMsg);
 }
@@ -141,7 +128,6 @@ void Node::checkLiveness() {
         if (lastHeardFrom.find(i) != lastHeardFrom.end()) {
             if (simTime() - lastHeardFrom[i] > 39.0) {
                  EV << "WARNING: Neighbor on gate " << i << " is DEAD!" << endl;
-                 // Add report logic here if needed
                  lastHeardFrom[i] = simTime(); 
             }
         } else { lastHeardFrom[i] = simTime(); }
@@ -175,5 +161,5 @@ void Node::broadcast(cMessage *msg, bool excludeSender, int senderGate) {
 }
 
 void Node::finish() { 
-    if (keyPair) EC_KEY_free(keyPair); 
+    if (keyPair) EVP_PKEY_free(keyPair);
 }

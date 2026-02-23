@@ -1,4 +1,5 @@
 // Blockchain.ned
+
 simple Node
 {
     parameters:
@@ -6,9 +7,8 @@ simple Node
         double hashPower = default(10.0);
         string myIp = default("192.168.0.x");
 
-        // NEW PARAMETERS for Dynamic Lifecycle
-        double startUpTime @unit(s) = default(0s);    // When does this node come online?
-        double shutdownTime @unit(s) = default(-1s);  // When does it crash? (-1 = never)
+        double startUpTime @unit(s) = default(0s);
+        double shutdownTime @unit(s) = default(-1s);
 
         @display("i=device/pc");
     gates:
@@ -31,7 +31,6 @@ network SupplyChainNetwork
             @display("i=device/pc");
         }
     connections allowunconnected:
-        // P2P and Seed connections (Same as before)
         peer[0].port++ <--> Cable <--> seed[0].port++;
         peer[1].port++ <--> Cable <--> seed[0].port++;
         peer[2].port++ <--> Cable <--> seed[1].port++;
