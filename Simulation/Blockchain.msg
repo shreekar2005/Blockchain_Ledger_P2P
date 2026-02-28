@@ -1,4 +1,3 @@
-// Blockchain.msg
 message TransactionMsg {
     string txId;              
     string senderAddress;     
@@ -21,12 +20,12 @@ message BlockMsg {
 }
 
 message GossipMsg {
-    int type;                 // 1=Block, 2=Tx, 3=Liveness, 4=DeadNode
+    int type;
     string originatorIp;
     int msgId;
     string gossipFormat;      
     string payload;           
-    TransactionMsg txPayload; // Payload for standalone transaction gossip
+    TransactionMsg txPayload;
     int hopCount;
 }
 

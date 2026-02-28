@@ -1,4 +1,3 @@
-// Blockchain.ned
 simple Node {
     parameters:
         bool isSeed = default(false);
@@ -11,7 +10,7 @@ simple Node {
         double doubleSpendTime @unit(s) = default(-1s);
         double invalidBlockTime @unit(s) = default(-1s);
     gates:
-        inout port[]; // Empty brackets allow dynamic resizing at runtime
+        inout port[];
 }
 
 network SupplyChainNetwork {
@@ -35,5 +34,4 @@ network SupplyChainNetwork {
         }
         
     connections allowunconnected:
-        // Connections are built dynamically in C++
 }
