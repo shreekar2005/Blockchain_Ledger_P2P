@@ -253,11 +253,34 @@ void Node::handleMessage(cMessage *msg) {
             lastHeardFrom[msg->getArrivalGate()->getIndex()] = simTime();
             delete msg; return;
         }
-        if (gMsg->getType() == 4) { 
-            if (isSeed) EV << "SEED RECEIVED ALERT: " << gMsg->getPayload() << endl;
+        if (gMsg->getType() == 4) {
+            std::string payload = gMsg->getPayload();
+            std::string gossipId = "DEAD_NODE_" + payload; 
+            
+            if (messageList.find(gossipId) == messageList.end()) {
+                messageList.insert(gossipId);
+                
+                if (isSeed) {
+                    size_t firstColon = payload.find(':');
+                    size_t secondColon = payload.find(':', firstColon + 1);
+                    std::string deadIp = payload.substr(firstColon + 1, secondColon - firstColon - 1);
+                    
+                    int deadId = -1;
+                    for (int id : knownPeerIds) {
+                        cModule* mod = getSimulation()->getModule(id);
+                        if (mod && mod->hasPar("myIp") && mod->par("myIp").stdstringValue() == deadIp) {
+                            deadId = id; break;
+                        }
+                    }
+                    if (deadId != -1) {
+                        knownPeerIds.erase(deadId);
+                        EV << "FINAL DECLARATION: Node " << deadIp << " is confirmed DEAD. Peer List updated." << endl;
+                    }
+                }
+                broadcast(gMsg->dup()); // Gossip it!
+            }
             delete msg; return;
-        }
-        
+        }        
         // Check Message List (ML) [cite: 31, 32]
         std::string gossipId = gMsg->getGossipFormat();
         if (messageList.find(gossipId) == messageList.end()) {

@@ -138,6 +138,14 @@ The `simulation_logs.log` file in the root directory contains the complete execu
 
 ---
 
+
+### Running the Demo
+To observe specific blockchain security features, run the simulation and fast-forward to these times:
+1. **t=50s**: Watch Peer-2 attempt an **Invalid Signature** attack.
+2. **t=100s**: Observe the P2P network detect a **Node Failure** and update Peer Lists.
+3. **t=150s**: Watch the ledger prevent a **Double Spend** attempt.
+4. **t=200s**: Observe the consensus mechanism reject a **Malicious Block** (Fork/Invalid Hash).
+
 ## Group Members
 
 * (B23CS1069) [b23cs1069@iitj.ac.in](mailto:b23cs1069@iitj.ac.in) Shreekar
