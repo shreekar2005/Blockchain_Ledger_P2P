@@ -20,15 +20,17 @@ Blockchain_Ledger_P2P/
 │   │
 │   ├── Node .cc/.h             # Main simulation logic (Timers, Network handling)
 │   ├── BlockchainLedger .cc/.h # Handles Block storage, Validation, and Double Spending check
-│   ├── CryptoUtils .cc/.h      # Helper functions for OpenSSL (SHA256, Keys)
+│   ├── CryptoUtils .cc/.h      # Helper functions for OpenSSL (SHA256, Keys, ECDSA)
 │   │
-│   └── Makefile                # Build file
+│   ├── Makefile                # Build file
+│   ├── out/                    # Generated compiled objects and executables
+│   └── results/                # Output simulation scalar/vector data
 │
 ├── blockchain_assignment_1.pdf # Actual assignment given by Instructor
 ├── LICENSE                     # Project License
 ├── README.md                   # This documentation file
+├── seed_ips.txt                # Bootstrapping IPs for the nodes
 └── simulation_logs.log         # Complete execution trace output
-
 ```
 
 ## What We Have Implemented
@@ -38,13 +40,14 @@ As per the assignment requirements, the simulation covers:
 1. **P2P Network:**
 
 * There are **Seed Nodes** (Servers) and **Peer Nodes** (Miners).
-* Peers connect to Seeds to register and then connect to each other.
+* Peers connect to Seeds to register, obtain Peer Lists, and establish connections to at least 4 distinct peers to form a connected graph.
 
 2. **Blockchain Logic:**
 
 * **Mining:** Nodes use an exponential timer to simulate Proof-of-Work. The difficulty depends on hash power.
 * **Consensus:** Nodes follow the **Longest Chain Rule**. If a longer chain is received, they switch to it.
 * **Merkle Tree:** Every block calculates a Merkle Root for its transactions (Task 2).
+* **Cryptography:** Implemented unique wallet address generation and true ECDSA digital signatures using the `secp256k1` curve via OpenSSL.
 
 3. **Security & Liveness:**
 
@@ -54,14 +57,14 @@ As per the assignment requirements, the simulation covers:
 
 4. **Analytical Modeling (Task 7):**
 
-* Included a Python script (`task7_analysis.py`) that models the exponential random variables to plot the waiting time () distribution and the relationship between  and Hash Power.
+* Included a Python script (`task7_analysis.py`) that models the exponential random variables to plot the waiting time distribution and the relationship between lambda and Hash Power.
 
 ## How to Compile and Run
 
 ### 1. Prerequisites
 
 1. You need **OMNeT++** installed.
-2. You need **OpenSSL** installed:
+2. You need **OpenSSL** installed for the cryptographic functions:
 
 ```bash
 sudo apt-get install libssl-dev
@@ -80,8 +83,8 @@ sudo apt-get install python3-matplotlib python3-numpy
 3. Click on **Project** in top bar -> **Properties** -> **OMNeT++** -> **Makemake**.
 4. Select the folder, go to **Options** -> **Link**.
 5. In "Additional libraries to link with: (-l option)", make sure to add:
-1. ssl
-2. crypto
+1. `ssl`
+2. `crypto`
 
 
 6. Click OK, Click Apply and Close.
@@ -107,40 +110,21 @@ Because the `Makefile` is generated, you are not tied to the OMNeT++ IDE. You ca
 ```bash
 cd Simulation
 ```
+
 2. **Build:** Run `make` to compile the project and generate the executable.
 3. **Clean:** Run `make clean` to remove build artifacts and temporary files.
 4. **Run:** After a successful build, execute the simulation directly from the terminal:
 ```bash
-./BlockchainSim
+./Simulation
 ```
 
 *(Note: You can also run the release build via `./out/gcc-release/BlockchainSim` depending on your active configuration).*
 
 ## Simulation Scenarios
-
-In `omnetpp.ini`, we have configured specific events to test the dynamic behavior:
-
-* **T=0s:** Network starts. Seeds and Peers 0, 1, 2, 4 are online.
-* **T=20s (Node Arrival):** **Peer 3** wakes up and joins the network late. It starts syncing.
-* **T=40s (Attack):** **Peer 2** tries to do a **Double Spend Attack**. The network rejects this invalid block.
-* **T=50s (Node Death):** **Peer 4** crashes (simulated failure).
-* **T=89s:** Neighbors detect Peer 4 is dead (after 39s timeout) and broadcast a report.
-
-## Simulation Logs (`simulation_logs.log`)
-
-The `simulation_logs.log` file in the root directory contains the complete execution trace of the network scenario described above. Key events you can find in the logs include:
-
-* **Node Lifecycle:** Entries showing `SEED ... ONLINE` and `PEER ... ONLINE` confirm the dynamic arrival of nodes (e.g., Peer 3 joining at T=20s).
-* **Mining & Consensus:** Frequent `MINED BLOCK` entries show successful Proof-of-Work, followed by `Received longer chain... Switching...` messages as nodes synchronize.
-* **Merkle Roots:** Every mined block logs its cryptographic root (e.g., `Root: 2795c735`), verifying Task 2.
-* **Double Spend Attack:** At T=40s, you will see `!!! INITIATING DOUBLE SPEND ATTACK !!!` followed immediately by neighbors rejecting the block with a `SECURITY ALERT`.
-* **Fault Detection:** Around T=89s, the logs show `WARNING: Neighbor on gate X is DEAD!`, confirming the network successfully detected the crash of Peer 4.
-
----
-
-
 ### Running the Demo
+
 To observe specific blockchain security features, run the simulation and fast-forward to these times:
+
 1. **t=50s**: Watch Peer-2 attempt an **Invalid Signature** attack.
 2. **t=100s**: Observe the P2P network detect a **Node Failure** and update Peer Lists.
 3. **t=150s**: Watch the ledger prevent a **Double Spend** attempt.
@@ -148,7 +132,7 @@ To observe specific blockchain security features, run the simulation and fast-fo
 
 ## Group Members
 
-* (B23CS1069) [b23cs1069@iitj.ac.in](mailto:b23cs1069@iitj.ac.in) Shreekar
-* (B23CS1101) [B23CS1101@iitj.ac.in](mailto:B23CS1101@iitj.ac.in) Tavishi Srivastava
-* (B23CS1076) [b23cs1076@iitj.ac.in](mailto:b23cs1076@iitj.ac.in) Vadlamudi Jyothsna
-* (B23CS1031) [b23cs1031@iitj.ac.in](mailto:b23cs1031@iitj.ac.in) Kurra Hema
+* (B23CS1069) b23cs1069@iitj.ac.in - Shreekar
+* (B23CS1101) B23CS1101@iitj.ac.in - Tavishi Srivastava
+* (B23CS1076) b23cs1076@iitj.ac.in - Vadlamudi Jyothsna
+* (B23CS1031) b23cs1031@iitj.ac.in - Kurra Hema
