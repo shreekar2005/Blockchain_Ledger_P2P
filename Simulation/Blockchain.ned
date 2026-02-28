@@ -7,6 +7,9 @@ simple Node {
         string myIp = default("");
         double startUpTime @unit(s) = default(0s);
         double killTime @unit(s) = default(-1s);
+        double invalidTxTime @unit(s) = default(-1s);
+        double doubleSpendTime @unit(s) = default(-1s);
+        double invalidBlockTime @unit(s) = default(-1s);
     gates:
         inout port[]; // Empty brackets allow dynamic resizing at runtime
 }

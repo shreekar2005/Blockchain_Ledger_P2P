@@ -23,10 +23,23 @@ void Node::initialize() {
     txTimer = new cMessage("TxTimer");
     plRetryTimer = new cMessage("PLRetryTimer");
     killTimer = new cMessage("KillTimer");
+    invalidTxTimer = new cMessage("InvalidTxTimer");
+    doubleSpendTimer = new cMessage("DoubleSpendTimer");
+    invalidBlockTimer = new cMessage("InvalidBlockTimer");
     isDead = false;
+    triggerInvalidBlock = false;
 
     double kt = par("killTime").doubleValue();
     if (kt > 0) scheduleAt(simTime() + kt, killTimer);
+
+    double itx = par("invalidTxTime").doubleValue();
+    if (itx > 0) scheduleAt(simTime() + itx, invalidTxTimer);
+
+    double dst = par("doubleSpendTime").doubleValue();
+    if (dst > 0) scheduleAt(simTime() + dst, doubleSpendTimer);
+
+    double ibt = par("invalidBlockTime").doubleValue();
+    if (ibt > 0) scheduleAt(simTime() + ibt, invalidBlockTimer);
     
     ledger.createGenesis();
 
@@ -70,17 +83,76 @@ void Node::handleMessage(cMessage *msg) {
     if (msg == killTimer) {
         isDead = true;
         EV << "NODE FAILURE SIMULATED: I am now dead." << endl;
-        // Cancel all future activities
         if (miningTimer->isScheduled()) cancelEvent(miningTimer);
         if (livenessTimer->isScheduled()) cancelEvent(livenessTimer);
         if (txTimer->isScheduled()) cancelEvent(txTimer);
         if (plRetryTimer->isScheduled()) cancelEvent(plRetryTimer);
-        return; // Persistent member, do not delete
+        return; 
     }
     
+    if (msg == invalidTxTimer) {
+        EV << "MALICIOUS ACTION: Generating Invalid Transaction (Bad Signature)..." << endl;
+        TransactionMsg tx;
+        tx.setSenderAddress(walletAddress.c_str());
+        tx.setSenderPublicKey(CryptoUtils::getPublicKeyString(keyPair).c_str());
+        tx.setData("MALICIOUS: Attempting to steal oil.");
+        tx.setTimestamp(simTime().dbl());
+        tx.setTxId(CryptoUtils::sha256("malicious").c_str());
+        tx.setSigR("BAD_SIG_R"); // Corrupting signature
+        tx.setSigS("BAD_SIG_S");
+        
+        std::string tid = std::string(tx.getTxId()).substr(0,8);
+        GossipMsg *gMsg = new GossipMsg("InvalidTx");
+        gMsg->setType(2); 
+        gMsg->setOriginatorIp(myIp.c_str());
+        gMsg->setMsgId(gossipCounter++);
+        std::string format = std::to_string(simTime().dbl()) + ":" + myIp + ":" + std::to_string(gMsg->getMsgId());
+        gMsg->setGossipFormat(format.c_str());
+        gMsg->setTxPayload(tx);
+        broadcast(gMsg);
+        EV << "MALICIOUS ACTION: Generated Invalid Transaction [ID: " << tid << "...]" << endl;
+        return;
+    }
+
+    if (msg == doubleSpendTimer) {
+        EV << "MALICIOUS ACTION: Attempting Double Spend (Two txs same asset)..." << endl;
+        TransactionMsg tx1, tx2;
+        tx1.setSenderAddress(walletAddress.c_str());
+        tx1.setSenderPublicKey(CryptoUtils::getPublicKeyString(keyPair).c_str());
+        tx1.setData("SPEND:Oil_Batch_0"); // Genesis/early asset
+        tx1.setTimestamp(simTime().dbl());
+        tx1.setTxId(CryptoUtils::sha256("ds1").c_str());
+        std::string r1, s1; CryptoUtils::signData(tx1.getData(), keyPair, r1, s1);
+        tx1.setSigR(r1.c_str()); tx1.setSigS(s1.c_str());
+
+        tx2 = tx1; // Duplicate everything
+        tx2.setTxId(CryptoUtils::sha256(std::to_string(simTime().dbl()) + "ds2").c_str()); // Unique TxID but same asset/data
+        tx2.setTimestamp(simTime().dbl() + 0.001);
+
+        GossipMsg *g1 = new GossipMsg("DoubleSpend1");
+        g1->setType(2); g1->setTxPayload(tx1);
+        g1->setGossipFormat((std::to_string(simTime().dbl()) + ":" + myIp + ":DS1").c_str());
+        
+        GossipMsg *g2 = new GossipMsg("DoubleSpend2");
+        g2->setType(2); g2->setTxPayload(tx2);
+        g2->setGossipFormat((std::to_string(simTime().dbl()) + ":" + myIp + ":DS2").c_str());
+        
+        broadcast(g1); broadcast(g2);
+        std::string tid1 = std::string(tx1.getTxId()).substr(0,8);
+        std::string tid2 = std::string(tx2.getTxId()).substr(0,8);
+        EV << "MALICIOUS ACTION: Generated Double Spend Txs: [ID: " << tid1 << "...] and [ID: " << tid2 << "...]" << endl;
+        return;
+    }
+
+    if (msg == invalidBlockTimer) {
+        EV << "MALICIOUS ACTION: Node will mine an invalid block soon." << endl;
+        triggerInvalidBlock = true;
+        return;
+    }
+
     if (isDead) {
-        if (msg == miningTimer || msg == livenessTimer || msg == txTimer || msg == plRetryTimer) {
-            return; // Persistent members, do not delete
+        if (msg == miningTimer || msg == livenessTimer || msg == txTimer || msg == plRetryTimer || msg == invalidTxTimer || msg == doubleSpendTimer || msg == invalidBlockTimer) {
+            return; 
         }
         delete msg;
         return;
@@ -113,9 +185,17 @@ void Node::handleMessage(cMessage *msg) {
     if (msg == miningTimer) {
         LocalBlock b = ledger.createCandidateBlock(getId(), myIp, keyPair, walletAddress, mempool);
         BlockMsg *bMsg = new BlockMsg("BlockData");
+        
+        if (triggerInvalidBlock) {
+            EV << "MALICIOUS ACTION: Mining an INVALID block (Fake Previous Hash)..." << endl;
+            bMsg->setPreviousHash("FAKE_PREV_HASH");
+            triggerInvalidBlock = false; // Reset
+        } else {
+            bMsg->setPreviousHash(b.prevHash.c_str());
+        }
+
         bMsg->setIndex(b.index);
         bMsg->setCurrentHash(b.hash.c_str());
-        bMsg->setPreviousHash(b.prevHash.c_str());
         bMsg->setMerkleRoot(b.merkleRoot.c_str());
         bMsg->setTimestamp(simTime().dbl());
         bMsg->setMinerId(myIp.c_str());
@@ -126,7 +206,12 @@ void Node::handleMessage(cMessage *msg) {
         ledger.validateAndAddBlock(bMsg, simTime().dbl()); 
         mempool.clear(); 
         
-        EV << "BLOCK MINED: Index=" << b.index << " | Hash=" << b.hash.substr(0,8) << "..." << endl;
+        std::string bh = std::string(b.hash).substr(0,8);
+        std::string txList = "";
+        for(size_t k=0; k<b.transactions.size(); k++) {
+            txList += std::string(b.transactions[k].getTxId()).substr(0,8) + (k == b.transactions.size()-1 ? "" : ", ");
+        }
+        EV << "BLOCK MINED: Index=" << b.index << " | Hash=" << bh << "... | Txs=[" << txList << "]" << endl;
         broadcast(bMsg->dup());
         delete bMsg;
         startMining();
@@ -177,9 +262,12 @@ void Node::handleMessage(cMessage *msg) {
             // If it's a Transaction Gossip (Type 2), validate and add to mempool
             if (gMsg->getType() == 2 && !isSeed) {
                 TransactionMsg incomingTx = gMsg->getTxPayload();
+                std::string tid = std::string(incomingTx.getTxId()).substr(0,8);
                 if (ledger.validateTransaction(incomingTx)) {
                     mempool.push_back(incomingTx);
-                    EV << "Valid transaction received and added to mempool: " << incomingTx.getData() << endl;
+                    EV << "Valid transaction [ID: " << tid << "...] received and added to mempool: " << incomingTx.getData() << endl;
+                } else {
+                    EV << "INVALID TRANSACTION [ID: " << tid << "...] REJECTED: Signature verification failed or invalid asset." << endl;
                 }
             }
             broadcast(gMsg->dup());
@@ -231,7 +319,8 @@ void Node::generateTransaction() {
     gMsg->setTxPayload(tx);
 
     broadcast(gMsg);
-    EV << "GOSSIP FORMAT: " << format << " | New Transaction Generated" << endl;
+    std::string tid = std::string(tx.getTxId()).substr(0,8);
+    EV << "GOSSIP FORMAT: " << format << " | New Transaction Generated [ID: " << tid << "...]" << endl;
 }
 void Node::initiatePeerRegistration() {
     int connectionsMade = 0;
@@ -322,11 +411,16 @@ void Node::handleSync(BlockMsg* bMsg) {
         return;
     }
     if (miningTimer->isScheduled()) cancelEvent(miningTimer);
-    if (ledger.validateAndAddBlock(bMsg, simTime().dbl()) == 1) {
-        EV << "BLOCK ACCEPTED: Index=" << bMsg->getIndex() << " | From=" << bMsg->getMinerId() << endl;
+    int result = ledger.validateAndAddBlock(bMsg, simTime().dbl());
+    std::string bHash = std::string(bMsg->getCurrentHash()).substr(0,8);
+    int txCount = bMsg->getTransactionsArraySize();
+    if (result == 1) {
+        EV << "BLOCK ACCEPTED: Index=" << bMsg->getIndex() << " | Hash=" << bHash << "... | Txs=" << txCount << " | From=" << bMsg->getMinerId() << endl;
         cleanMempool(bMsg); 
         broadcast(bMsg->dup());
         if (pendingQueue.empty()) startMining();
+    } else if (result == -1) {
+        EV << "BLOCK REJECTED: Index=" << bMsg->getIndex() << " | Hash=" << bHash << "... | Txs=" << txCount << " | Reason: Validation failed." << endl;
     }
 }
 
@@ -403,4 +497,7 @@ void Node::finish() {
     cancelAndDelete(txTimer);
     cancelAndDelete(plRetryTimer);
     cancelAndDelete(killTimer);
+    cancelAndDelete(invalidTxTimer);
+    cancelAndDelete(doubleSpendTimer);
+    cancelAndDelete(invalidBlockTimer);
 }

@@ -50,7 +50,11 @@ class Node : public cSimpleModule {
     cMessage *txTimer; 
     cMessage *plRetryTimer; 
     cMessage *killTimer; 
+    cMessage *invalidTxTimer;
+    cMessage *doubleSpendTimer;
+    cMessage *invalidBlockTimer;
     bool isDead; 
+    bool triggerInvalidBlock; 
 
   protected:
     virtual void initialize() override;
