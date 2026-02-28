@@ -145,8 +145,10 @@ void Node::handleMessage(cMessage *msg) {
     }
 
     if (msg == invalidBlockTimer) {
-        EV << "MALICIOUS ACTION: Node will mine an invalid block soon." << endl;
+        EV << "MALICIOUS ACTION: Node will mine an INVALID block NOW for demo." << endl;
+        if (miningTimer->isScheduled()) cancelEvent(miningTimer);
         triggerInvalidBlock = true;
+        scheduleAt(simTime(), miningTimer); // Force mining NOW
         return;
     }
 
@@ -186,10 +188,17 @@ void Node::handleMessage(cMessage *msg) {
         LocalBlock b = ledger.createCandidateBlock(getId(), myIp, keyPair, walletAddress, mempool);
         BlockMsg *bMsg = new BlockMsg("BlockData");
         
+        std::string bh = std::string(b.hash).substr(0,8);
+        std::string txList = "";
+        for(size_t k=0; k<b.transactions.size(); k++) {
+            txList += std::string(b.transactions[k].getTxId()).substr(0,8) + (k == b.transactions.size()-1 ? "" : ", ");
+        }
+        
+        std::string tag = triggerInvalidBlock ? " (MALICIOUS)" : "";
         if (triggerInvalidBlock) {
             EV << "MALICIOUS ACTION: Mining an INVALID block (Fake Previous Hash)..." << endl;
             bMsg->setPreviousHash("FAKE_PREV_HASH");
-            triggerInvalidBlock = false; // Reset
+            triggerInvalidBlock = false; 
         } else {
             bMsg->setPreviousHash(b.prevHash.c_str());
         }
@@ -206,12 +215,7 @@ void Node::handleMessage(cMessage *msg) {
         ledger.validateAndAddBlock(bMsg, simTime().dbl()); 
         mempool.clear(); 
         
-        std::string bh = std::string(b.hash).substr(0,8);
-        std::string txList = "";
-        for(size_t k=0; k<b.transactions.size(); k++) {
-            txList += std::string(b.transactions[k].getTxId()).substr(0,8) + (k == b.transactions.size()-1 ? "" : ", ");
-        }
-        EV << "BLOCK MINED: Index=" << b.index << " | Hash=" << bh << "... | Txs=[" << txList << "]" << endl;
+        EV << "BLOCK MINED" << tag << ": Index=" << b.index << " | Hash=" << bh << "... | Txs=[" << txList << "] | Miner=" << myIp << endl;
         broadcast(bMsg->dup());
         delete bMsg;
         startMining();
@@ -420,7 +424,7 @@ void Node::handleSync(BlockMsg* bMsg) {
         broadcast(bMsg->dup());
         if (pendingQueue.empty()) startMining();
     } else if (result == -1) {
-        EV << "BLOCK REJECTED: Index=" << bMsg->getIndex() << " | Hash=" << bHash << "... | Txs=" << txCount << " | Reason: Validation failed." << endl;
+        EV << "MALICIOUS BLOCK REJECTED: Index=" << bMsg->getIndex() << " | Hash=" << bHash << "... | Txs=" << txCount << " | Reason: Validation failed." << endl;
     }
 }
 

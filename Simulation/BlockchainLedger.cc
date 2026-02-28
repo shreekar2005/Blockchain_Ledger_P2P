@@ -56,6 +56,11 @@ int BlockchainLedger::validateAndAddBlock(BlockMsg *bMsg, double currentSimTime)
     }
 
     if (bMsg->getIndex() > (int)chain.size() - 1) {
+        // Enforce PreviousHash rule
+        if (bMsg->getPreviousHash() != chain.back().hash) {
+            return -1; 
+        }
+
         LocalBlock newB;
         newB.index = bMsg->getIndex();
         newB.hash = bMsg->getCurrentHash();
