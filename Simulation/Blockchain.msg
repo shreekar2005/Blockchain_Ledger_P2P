@@ -1,30 +1,46 @@
 // Blockchain.msg
-
 message TransactionMsg {
-    string sender;
-    string receiver;
-    double amount;
-    string signature;
-    string txId;
-    string data;
-    int timestamp;
+    string txId;              
+    string senderAddress;     
+    string senderPublicKey;   
+    string receiverAddress;   
+    string data;              
+    string sigR;              
+    string sigS;              
+    double timestamp;
 }
 
 message BlockMsg {
     int index;
     string previousHash;
     string merkleRoot;
-    int timestamp;
+    double timestamp;         
     string minerId;
     string currentHash;
-    string transactions[]; 
-    int blockHeight;
+    TransactionMsg transactions[]; 
 }
 
 message GossipMsg {
-    int type; // 1=NewBlock, 2=NewTx, 3=Liveness, 4=DeadNodeReport
+    int type;                 // 1=Block, 2=Tx, 3=Liveness, 4=DeadNode
     string originatorIp;
     int msgId;
-    string payload; 
+    string gossipFormat;      
+    string payload;           
+    TransactionMsg txPayload; // Payload for standalone transaction gossip
     int hopCount;
+}
+
+message RegisterMsg {
+    string peerIp;
+    int peerModuleId;
+}
+
+message PeerListMsg {
+    string peers[];
+    int peerModuleIds[];
+}
+
+message SyncRequestMsg {
+    string requesterIp;
+    int targetHeight;
 }

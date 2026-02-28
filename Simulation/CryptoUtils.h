@@ -1,37 +1,22 @@
-// CryptoUtils.h
-
 #ifndef CRYPTOUTILS_H_
 #define CRYPTOUTILS_H_
 
 #include <string>
-#include <vector>
 #include <openssl/evp.h>
+#include <openssl/ecdsa.h>
+#include <openssl/bn.h>
+#include <openssl/crypto.h>
 
-/**
- * @brief helper class for cryptography functions
- */
 class CryptoUtils {
 public:
-    /**
-     * @brief generates 256 bit hash for given string data
-     * @param str the input string to be hashed
-     * @return the hexadecimal string representation of the hash
-     */
     static std::string sha256(const std::string str);
-    
-    /**
-     * @brief creates new elliptic curve key pair for node identity
-     * @return pointer to the generated evp_pkey object
-     */
     static EVP_PKEY* generateKey();
+    static std::string deriveWalletAddress(EVP_PKEY* key);
+    static std::string getPublicKeyString(EVP_PKEY* key);
     
-    /**
-     * @brief creates mock signature for simulation purposes
-     * @param data the string data to sign
-     * @param key the private key used for signing (unused in mock)
-     * @return a dummy signature string
-     */
-    static std::string signData(const std::string data, EVP_PKEY* key);
+    // ECDSA Functions - Now using true OpenSSL implementation
+    static bool signData(const std::string data, EVP_PKEY* key, std::string& r, std::string& s);
+    static bool verifySignature(const std::string data, const std::string pubKeyStr, const std::string r, const std::string s);
 };
 
 #endif

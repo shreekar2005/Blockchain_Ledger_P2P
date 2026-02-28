@@ -1,54 +1,36 @@
 // Blockchain.ned
-
-simple Node
-{
+simple Node {
     parameters:
         bool isSeed = default(false);
         double hashPower = default(10.0);
-        string myIp = default("192.168.0.x");
-
+        double meanBlockTime = default(2.0);
+        string myIp = default("");
         double startUpTime @unit(s) = default(0s);
-        double shutdownTime @unit(s) = default(-1s);
-
-        @display("i=device/pc");
+        double killTime @unit(s) = default(-1s);
     gates:
-        inout port[];
+        inout port[]; // Empty brackets allow dynamic resizing at runtime
 }
 
-network SupplyChainNetwork
-{
-    // NEW: make the background canvas large and spacious (800x600 pixels)
-    @display("bgb=800,800"); 
-    
-    types:
-        channel Cable extends ned.DelayChannel {
-            delay = 100ms;
-        }
+network SupplyChainNetwork {
+    parameters:
+        @display("bgb=800,800"); 
+        int numSeeds = default(3);
+        int numPeers = default(10);
+        
     submodules:
-        seed[2]: Node {
-            isSeed = true;
-            @display("i=device/server;is=n");
+        seed[numSeeds]: Node {
+            parameters:
+                isSeed = true;
+                myIp = "seed-" + string(index);
+                @display("i=device/server;is=n");
         }
-        peer[5]: Node {
-            isSeed = false;
-            // arranges all 5 peers in a perfect circle centered at (400,300) with a radius of 220 pixels.
-            @display("i=device/pc;p=100,100,ring,320,320");
+        peer[numPeers]: Node {
+            parameters:
+                isSeed = false;
+                myIp = "peer-" + string(index);
+                @display("i=device/pc;p=100,100,ring,320,320");
         }
+        
     connections allowunconnected:
-        // peer server
-        peer[0].port++ <--> Cable <--> seed[0].port++;
-        peer[1].port++ <--> Cable <--> seed[0].port++;
-        peer[2].port++ <--> Cable <--> seed[1].port++;
-        peer[3].port++ <--> Cable <--> seed[1].port++;
-        peer[4].port++ <--> Cable <--> seed[0].port++;
-
-        // peer peer
-        peer[0].port++ <--> Cable <--> peer[1].port++;
-        peer[1].port++ <--> Cable <--> peer[2].port++;
-        peer[2].port++ <--> Cable <--> peer[3].port++;
-        peer[3].port++ <--> Cable <--> peer[4].port++;
-        peer[4].port++ <--> Cable <--> peer[0].port++;
-
-        // server server
-        seed[0].port++ <--> Cable <--> seed[1].port++;
+        // Connections are built dynamically in C++
 }

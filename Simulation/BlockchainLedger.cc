@@ -1,8 +1,7 @@
-// BlockchainLedger.cc
-
 #include "BlockchainLedger.h"
 #include "CryptoUtils.h"
 #include <iostream>
+#include <cmath>
 
 BlockchainLedger::BlockchainLedger() {}
 
@@ -10,44 +9,35 @@ void BlockchainLedger::createGenesis() {
     LocalBlock genesis;
     genesis.index = 0;
     genesis.prevHash = "0000";
-
-    genesis.transactions.push_back("CREATE:Genesis_Asset");
+    
+    TransactionMsg tx;
+    tx.setData("CREATE:Genesis_Asset");
+    genesis.transactions.push_back(tx);
 
     genesis.merkleRoot = calculateMerkleRoot(genesis.transactions);
     genesis.hash = CryptoUtils::sha256(std::to_string(genesis.index) + genesis.prevHash + genesis.merkleRoot);
     chain.push_back(genesis);
-
     unspentAssets.insert("Genesis_Asset");
 }
 
 int BlockchainLedger::getHeight() { return chain.size(); }
 std::string BlockchainLedger::getHeadHash() { return chain.back().hash; }
 
-LocalBlock BlockchainLedger::createCandidateBlock(int myIndex, std::string myIp) {
-    LocalBlock newBlock;
-    newBlock.index = chain.size();
-    newBlock.prevHash = chain.back().hash;
-    
-    if (!unspentAssets.empty()) {
-        std::string assetToSpend = *unspentAssets.begin();
-        newBlock.transactions.push_back("SPEND:" + assetToSpend);
+bool BlockchainLedger::validateTransaction(const TransactionMsg& tx) {
+    if (!CryptoUtils::verifySignature(tx.getData(), tx.getSenderPublicKey(), tx.getSigR(), tx.getSigS())) {
+        return false;
     }
-
-    std::string asset1 = "Oil_BatchA_" + std::to_string(chain.size()) + "_" + std::to_string(myIndex);
-    std::string asset2 = "Oil_BatchB_" + std::to_string(chain.size()) + "_" + std::to_string(myIndex);
-    std::string asset3 = "Oil_BatchC_" + std::to_string(chain.size()) + "_" + std::to_string(myIndex);
-
-    newBlock.transactions.push_back("CREATE:" + asset1);
-    newBlock.transactions.push_back("CREATE:" + asset2);
-    newBlock.transactions.push_back("CREATE:" + asset3);
-    
-    newBlock.merkleRoot = calculateMerkleRoot(newBlock.transactions);
-    newBlock.hash = CryptoUtils::sha256(std::to_string(newBlock.index) + newBlock.prevHash + newBlock.merkleRoot);
-    
-    return newBlock;
+    std::string data = tx.getData();
+    if (data.find("SPEND:") == 0) {
+        std::string asset = data.substr(6);
+        if (unspentAssets.find(asset) == unspentAssets.end()) return false;
+    }
+    return true;
 }
 
-int BlockchainLedger::validateAndAddBlock(BlockMsg *bMsg) {
+int BlockchainLedger::validateAndAddBlock(BlockMsg *bMsg, double currentSimTime) {
+    if (std::abs(currentSimTime - bMsg->getTimestamp()) > 3600.0) return -1;
+
     for(auto &b : chain) {
         if (b.hash == bMsg->getCurrentHash()) return 0; 
     }
@@ -57,19 +47,12 @@ int BlockchainLedger::validateAndAddBlock(BlockMsg *bMsg) {
 
     int n = bMsg->getTransactionsArraySize();
     for(int k=0; k<n; k++) {
-        std::string tx = bMsg->getTransactions(k);
+        TransactionMsg tx = bMsg->getTransactions(k);
+        if (!validateTransaction(tx)) return -1; 
 
-        if (tx.find("SPEND:") == 0) {
-            std::string asset = tx.substr(6);
-            if (unspentAssets.find(asset) == unspentAssets.end()) {
-                return -1; 
-            }
-            spentInThisBlock.push_back(asset);
-        }
-        else if (tx.find("CREATE:") == 0) {
-            std::string asset = tx.substr(7);
-            createdInThisBlock.push_back(asset);
-        }
+        std::string data = tx.getData();
+        if (data.find("SPEND:") == 0) spentInThisBlock.push_back(data.substr(6));
+        else if (data.find("CREATE:") == 0) createdInThisBlock.push_back(data.substr(7));
     }
 
     if (bMsg->getIndex() > (int)chain.size() - 1) {
@@ -78,7 +61,6 @@ int BlockchainLedger::validateAndAddBlock(BlockMsg *bMsg) {
         newB.hash = bMsg->getCurrentHash();
         newB.prevHash = bMsg->getPreviousHash();
         newB.merkleRoot = bMsg->getMerkleRoot();
-        
         for(int k=0; k<n; k++) newB.transactions.push_back(bMsg->getTransactions(k));
 
         for (const std::string& spent : spentInThisBlock) unspentAssets.erase(spent);
@@ -90,11 +72,39 @@ int BlockchainLedger::validateAndAddBlock(BlockMsg *bMsg) {
     return 0;
 }
 
-std::string BlockchainLedger::calculateMerkleRoot(std::vector<std::string> txs) {
-    if (txs.empty()) return "";
-    if (txs.size() == 1) return CryptoUtils::sha256(txs[0]);
+LocalBlock BlockchainLedger::createCandidateBlock(int myIndex, std::string myIp, EVP_PKEY* myKey, std::string myAddr, std::vector<TransactionMsg>& mempool) {
+    LocalBlock newBlock;
+    newBlock.index = chain.size();
+    newBlock.prevHash = chain.back().hash;
     
-    std::vector<std::string> currentLevel = txs;
+    // Miner reward / creation TX
+    TransactionMsg cbTx;
+    cbTx.setSenderAddress(myAddr.c_str());
+    cbTx.setSenderPublicKey(CryptoUtils::getPublicKeyString(myKey).c_str());
+    cbTx.setData(("CREATE:Oil_Batch_" + std::to_string(chain.size())).c_str());
+    std::string r, s;
+    CryptoUtils::signData(cbTx.getData(), myKey, r, s);
+    cbTx.setSigR(r.c_str());
+    cbTx.setSigS(s.c_str());
+    cbTx.setTxId(CryptoUtils::sha256(cbTx.getData()).c_str());
+    newBlock.transactions.push_back(cbTx);
+    
+    // Pull from mempool
+    for (const auto& memTx : mempool) {
+        newBlock.transactions.push_back(memTx);
+    }
+    
+    newBlock.merkleRoot = calculateMerkleRoot(newBlock.transactions);
+    newBlock.hash = CryptoUtils::sha256(std::to_string(newBlock.index) + newBlock.prevHash + newBlock.merkleRoot);
+    
+    return newBlock;
+}
+
+std::string BlockchainLedger::calculateMerkleRoot(std::vector<TransactionMsg>& txs) {
+    if (txs.empty()) return "";
+    std::vector<std::string> currentLevel;
+    for(auto& tx : txs) currentLevel.push_back(CryptoUtils::sha256(tx.getData()));
+
     while (currentLevel.size() > 1) {
         std::vector<std::string> nextLevel;
         for (size_t i = 0; i < currentLevel.size(); i += 2) {
