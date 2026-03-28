@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -O2
+CFLAGS = -O2
 LIBS = -lssl -lcrypto
 
 all: task1 task2
@@ -26,4 +26,4 @@ run7:
 	python3 task7.py
 
 clean:
-	rm -f task1 task2
+	rm -f task1 task2 task5

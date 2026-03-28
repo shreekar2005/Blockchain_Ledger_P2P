@@ -33,8 +33,8 @@ void compute_sha256(const char *input, char *output) {
  * @param output the buffer for the resulting parent hash
  */
 void combine_and_hash(const char *hash1, const char *hash2, char *output) {
-    char combined[129]; 
-    snprintf(combined, sizeof(combined), "%s%s", hash1, hash2);
+    char combined[130]; // 64 + 64 + 1 null terminator
+    snprintf(combined, sizeof(combined), "%.64s%.64s", hash1, hash2);
     compute_sha256(combined, output);
 }
 
