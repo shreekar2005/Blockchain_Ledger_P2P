@@ -559,7 +559,7 @@ void Node::checkLiveness() {
         cGate* outGate = gate("port$o", i);
         if (!outGate->isConnected()) continue;
         
-        if (simTime().dbl() - lastHeardFrom[i] > 39.0) {
+        if (simTime().dbl() - lastHeardFrom[i] >= 39.0) {
             cModule* remoteModule = outGate->getPathEndGate()->getOwnerModule();
             string remoteIp = remoteModule->hasPar("myIp") ? remoteModule->par("myIp").stdstringValue() : "Unknown";
 

@@ -1,13 +1,13 @@
 #
-# OMNeT++/OMNEST Makefile for Simulation
+# OMNeT++/OMNEST Makefile for BlockchainSim
 #
 # This file was generated with the command:
-#  opp_makemake -f --deep -L/usr/lib -lcrypto -lssl
+#  opp_makemake -f --deep -O out -I. -lssl -lcrypto
 #
 
 # Name of target to be created (-o option)
 TARGET_DIR = .
-TARGET_NAME = Simulation$(D)
+TARGET_NAME = BlockchainSim$(D)
 TARGET = $(TARGET_NAME)$(EXE_SUFFIX)
 TARGET_FILES = $(TARGET_DIR)/$(TARGET)
 
@@ -17,13 +17,13 @@ USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(QTENV_LIBS) $(CMDENV_LIBS)
 #USERIF_LIBS = $(QTENV_LIBS)
 
 # C++ include paths (with -I)
-INCLUDE_PATH =
+INCLUDE_PATH = -I.
 
 # Additional object and library files to link with
 EXTRA_OBJS =
 
 # Additional libraries (-L, -l options)
-LIBS = $(LDFLAG_LIBPATH)/usr/lib  -lcrypto -lssl
+LIBS =  -lssl -lcrypto
 
 # Output directory
 PROJECT_OUTPUT_DIR = out
@@ -58,9 +58,6 @@ include $(CONFIGFILE)
 
 # Simulation kernel and user interface libraries
 OMNETPP_LIBS = $(OPPMAIN_LIB) $(USERIF_LIBS) $(KERNEL_LIBS) $(SYS_LIBS)
-ifneq ($(PLATFORM),win32)
-LIBS += -Wl,-rpath,$(abspath /usr/lib)
-endif
 
 COPTS = $(CFLAGS) $(IMPORT_DEFINES)  $(INCLUDE_PATH) -I$(OMNETPP_INCL_DIR)
 MSGCOPTS = $(INCLUDE_PATH)
@@ -77,6 +74,8 @@ endif
 
 #------------------------------------------------------------------------------
 # User-supplied makefile fragment(s)
+-include makefrag
+
 #------------------------------------------------------------------------------
 
 # Main target
