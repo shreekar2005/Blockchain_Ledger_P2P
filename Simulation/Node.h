@@ -27,10 +27,10 @@ class Node : public cSimpleModule {
   private:
     BlockchainLedger ledger;                      ///< Local copy of the blockchain ledger
     EVP_PKEY *keyPair;                            ///< ECDSA key pair for the node
-    string walletAddress;                    ///< Derived wallet address for this node
+    string walletAddress;                         ///< Derived wallet address for this node
 
     bool isSeed;                                  ///< Flag indicating if this node is a seed node
-    string myIp;                             ///< IP address of the node
+    string myIp;                                  ///< IP address of the node
     double hashPower;                             ///< Mining power of the node
     double meanBlockTime;                         ///< Average time to mine a block
     
@@ -38,22 +38,24 @@ class Node : public cSimpleModule {
     int totalSeedsInNetwork;                      ///< Total number of seed nodes in the network
     int numSeedsToRegister;                       ///< Number of seeds to contact for registration
     int plResponsesReceived;                      ///< Counter for Peer List responses
-    vector<string> allSeedIps;          ///< List of all known seed IP addresses
-    set<int> connectedSeedIds;               ///< Set of IDs of connected seed nodes
-    set<int> knownPeerIds;                   ///< Set of IDs of known peer nodes
-    vector<int> activeConnections;           ///< List of active outgoing connections
+    vector<string> allSeedIps;                    ///< List of all known seed IP addresses
+    set<int> connectedSeedIds;                    ///< Set of IDs of connected seed nodes
+    set<int> knownPeerIds;                        ///< Set of IDs of known peer nodes
+    vector<int> activeConnections;                ///< List of active outgoing connections
     
-    map<int, pair<string, int>> neighborInfo; ///< Map of gate index to neighbor info {IP, Port}
+    map<int, pair<string, int>> neighborInfo;     ///< Map of gate index to neighbor info {IP, Port}
     
     // Sync & Gossip State
-    bool isSynced;                                ///< Flag indicating if the node is synced with the network
-    map<int, BlockMsg*> pendingQueue;        ///< Queue for blocks received out of order
-    set<string> messageList;            ///< Set of processed message IDs to prevent duplicates
+    bool isSynced;                                ///< Flag indicating if the node is fully synced with the network
+    int currentSyncHeight;                        ///< The height of the block currently being requested during sync
+    int targetSyncHeight;                         ///< The peak height of the network when the node began syncing
+    map<int, BlockMsg*> pendingQueue;             ///< Queue for blocks received out of order or while syncing
+    set<string> messageList;                      ///< Set of processed message IDs to prevent duplicates
     int gossipCounter;                            ///< Counter for gossip message tracking
-    map<int, simtime_t> lastHeardFrom;       ///< Last time a message was received from a neighbor
+    map<int, simtime_t> lastHeardFrom;            ///< Last time a message was received from a neighbor
 
     // Mempool for Transactions
-    vector<TransactionMsg> mempool;          ///< Collection of pending transactions
+    vector<TransactionMsg> mempool;               ///< Collection of pending transactions
 
     cMessage *miningTimer;                        ///< Timer for the mining process
     cMessage *livenessTimer;                      ///< Timer for periodic liveness checks

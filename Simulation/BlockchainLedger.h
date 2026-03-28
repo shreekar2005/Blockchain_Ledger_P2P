@@ -90,6 +90,13 @@ public:
      * @return True if valid, false otherwise.
      */
     bool validateTransaction(const TransactionMsg& tx);
+
+    /**
+     * @brief Fetches a specific block from the local ledger by its height/index.
+     * @param height The index of the block requested.
+     * @return Pointer to a dynamically allocated BlockMsg, or nullptr if not found.
+     */
+    BlockMsg* getBlockAtHeight(int height);
 };
 
 #endif // BLOCKCHAIN_LEDGER_H_

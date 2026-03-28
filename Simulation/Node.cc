@@ -16,6 +16,9 @@ void Node::initialize() {
     walletAddress = CryptoUtils::deriveWalletAddress(keyPair);
     
     isSynced = isSeed; 
+    currentSyncHeight = 0;
+    targetSyncHeight = 0;
+    
     gossipCounter = 0;
     plResponsesReceived = 0;
     meanBlockTime = par("meanBlockTime");
@@ -235,6 +238,19 @@ void Node::handleMessage(cMessage *msg) {
         broadcast(blockMsg->dup());
         delete blockMsg;
         startMining();
+        return;
+    }
+
+    SyncRequestMsg *syncReq = dynamic_cast<SyncRequestMsg*>(msg);
+    if (syncReq) {
+        if (isSeed) { 
+            int requestedHeight = syncReq->getTargetHeight();
+            BlockMsg* historicalBlock = ledger.getBlockAtHeight(requestedHeight); 
+            if (historicalBlock) {
+                send(historicalBlock->dup(), "port$o", msg->getArrivalGate()->getIndex());
+            }
+        }
+        delete msg;
         return;
     }
 
@@ -474,20 +490,41 @@ void Node::establishTCPConnections() {
         if (plRetryTimer->isScheduled()) cancelEvent(plRetryTimer);
         scheduleAt(simTime() + 10.0, plRetryTimer);
     }
-
-    if (!isSynced && activeConnections.size() >= 4) {
-        isSynced = true; 
-        scheduleAt(simTime() + uniform(5.0, 10.0), txTimer);
-        startMining();
-    }
 }
 
 void Node::handleSync(BlockMsg* bMsg) {
     if (!isSynced) {
         if (bMsg->getIndex() > ledger.getHeight()) {
             pendingQueue[bMsg->getIndex()] = bMsg->dup();
-            isSynced = true; 
-            processPendingQueue();
+            
+            if (targetSyncHeight == 0) {
+                targetSyncHeight = bMsg->getIndex();
+                currentSyncHeight = ledger.getHeight() + 1; 
+                
+                EV << "SYNC INITIATED: I am behind. Requesting block " << currentSyncHeight << "..." << endl;
+                
+                SyncRequestMsg *syncReq = new SyncRequestMsg("SyncReq");
+                syncReq->setRequesterIp(myIp.c_str());
+                syncReq->setTargetHeight(currentSyncHeight);
+                broadcast(syncReq, true); 
+            }
+            else if (bMsg->getIndex() == currentSyncHeight) {
+                ledger.validateAndAddBlock(bMsg, simTime().dbl());
+                EV << "SYNC PROGRESS: Caught up to block " << currentSyncHeight << endl;
+                
+                currentSyncHeight++;
+                
+                if (currentSyncHeight == targetSyncHeight) {
+                    isSynced = true;
+                    EV << "SYNC COMPLETE! Processing pending queue..." << endl;
+                    processPendingQueue();
+                } else {
+                    SyncRequestMsg *syncReq = new SyncRequestMsg("SyncReq");
+                    syncReq->setRequesterIp(myIp.c_str());
+                    syncReq->setTargetHeight(currentSyncHeight);
+                    broadcast(syncReq, true);
+                }
+            }
         }
         return;
     }

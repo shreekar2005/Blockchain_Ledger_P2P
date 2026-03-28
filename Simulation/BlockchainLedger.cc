@@ -172,3 +172,28 @@ string BlockchainLedger::calculateMerkleRoot(vector<TransactionMsg>& txs) {
 
     return hashes[0];
 }
+
+BlockMsg* BlockchainLedger::getBlockAtHeight(int height) {
+    if (height < 0 || height >= static_cast<int>(chain.size())) {
+        return nullptr;
+    }
+
+    for (const auto& localBlock : chain) {
+        if (localBlock.index == height) {
+            BlockMsg* bMsg = new BlockMsg("HistoricalBlock");
+            bMsg->setIndex(localBlock.index);
+            bMsg->setPreviousHash(localBlock.prevHash.c_str());
+            bMsg->setMerkleRoot(localBlock.merkleRoot.c_str());
+            bMsg->setCurrentHash(localBlock.hash.c_str());
+            
+            size_t txCount = localBlock.transactions.size();
+            bMsg->setTransactionsArraySize(txCount);
+            for (size_t i = 0; i < txCount; ++i) {
+                bMsg->setTransactions(i, localBlock.transactions[i]);
+            }
+            return bMsg;
+        }
+    }
+    
+    return nullptr;
+}
